@@ -22,6 +22,8 @@ import com.redhat.labs.lodestar.config.JsonMarshaller;
 import com.redhat.labs.lodestar.exception.UnexpectedGitLabResponseException;
 import com.redhat.labs.lodestar.models.Engagement;
 import com.redhat.labs.lodestar.models.Status;
+import com.redhat.labs.lodestar.models.events.DeleteEngagementEvent;
+import com.redhat.labs.lodestar.models.events.DeleteProjectEvent;
 import com.redhat.labs.lodestar.models.gitlab.Action;
 import com.redhat.labs.lodestar.models.gitlab.Commit;
 import com.redhat.labs.lodestar.models.gitlab.CommitMultiple;
@@ -31,6 +33,9 @@ import com.redhat.labs.lodestar.models.gitlab.Group;
 import com.redhat.labs.lodestar.models.gitlab.Hook;
 import com.redhat.labs.lodestar.models.gitlab.Project;
 import com.redhat.labs.lodestar.utils.GitLabPathUtils;
+
+import io.quarkus.vertx.ConsumeEvent;
+import io.vertx.mutiny.core.eventbus.EventBus;
 
 @ApplicationScoped
 public class EngagementService {
@@ -43,6 +48,7 @@ public class EngagementService {
     private static final String USER_MGMT_FILE = USER_MGMT_FILE_PREFIX + "UUID.json";
     private static final String USER_MGMT_FILE_PLACEHOLDER = "UUID";
     private static final String IAC = "iac";
+    private static final String DELETE_ENGAGEMENT_EVENT = "delete.engagement.event";
 
     private String engagementPathPrefix;
 
@@ -72,6 +78,9 @@ public class EngagementService {
 
     @Inject
     JsonMarshaller json;
+
+    @Inject
+    EventBus eventBus;
 
     @PostConstruct
     public void setPathPrefix() {
@@ -242,6 +251,12 @@ public class EngagementService {
         return Optional.ofNullable(engagement);
     }
 
+    public void deleteEngagement(String customerName, String engagementName) {
+        // create and send delete engagement event
+        eventBus.sendAndForget(DELETE_ENGAGEMENT_EVENT,
+                DeleteEngagementEvent.builder().customerName(customerName).engagementName(engagementName).build());
+    }
+
     private File createEngagmentFile(Engagement engagement) {
         // Git api is read only here.
         engagement.setCommits(null);
@@ -329,6 +344,23 @@ public class EngagementService {
                 Character.lowSurrogate(mysteryAnimalCodePoint) };
 
         return String.valueOf(mysteryEmoji);
+    }
+
+    @ConsumeEvent(value = DELETE_ENGAGEMENT_EVENT)
+    void consumeDeleteEngagementEvent(DeleteEngagementEvent event) {
+
+        // get engagement
+        Engagement engagement = getEngagement(event.getCustomerName(), event.getEngagementName(), false);
+
+        // only remove if not launched
+        if (null != engagement && null == engagement.getLaunch()) {
+
+            // create and send delete event
+            eventBus.sendAndForget(ProjectStructureService.DELETE_PROJECT_EVENT, DeleteProjectEvent.builder()
+                    .engagement(engagement).engagementPathPrefix(engagementPathPrefix).build());
+
+        }
+
     }
 
 }

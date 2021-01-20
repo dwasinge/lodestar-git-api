@@ -31,4 +31,7 @@ public class ProjectStructure {
     @Builder.Default
     private Optional<Project> project = Optional.empty();
 
+    @Builder.Default
+    private boolean callWebHooks = false;
+
 }
