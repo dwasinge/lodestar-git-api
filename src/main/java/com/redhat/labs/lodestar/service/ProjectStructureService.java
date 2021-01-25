@@ -14,8 +14,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.redhat.labs.lodestar.models.BackendWebHook;
-import com.redhat.labs.lodestar.models.BackendWebHookProject;
 import com.redhat.labs.lodestar.models.Engagement;
 import com.redhat.labs.lodestar.models.ProjectStructure;
 import com.redhat.labs.lodestar.models.ProjectStructure.ProjectStructureBuilder;
@@ -351,9 +349,9 @@ public class ProjectStructureService {
             // call backend webhook
             Project p = project.get();
             String fullPath = p.getNamespace().getFullPath();
-            BackendWebHook hook = BackendWebHook.builder().eventName("project_deleted")
-                    .project(BackendWebHookProject.builder().pathWithNamespace(fullPath).build()).build();
-            LOGGER.debug("calling webhook with hook...{}", hook);
+//            BackendWebHook hook = BackendWebHook.builder().eventName("project_deleted")
+//                    .project(BackendWebHookProject.builder().pathWithNamespace(fullPath).build()).build();
+//            LOGGER.debug("calling webhook with hook...{}", hook);
             // TODO: add rest call here
 
         }

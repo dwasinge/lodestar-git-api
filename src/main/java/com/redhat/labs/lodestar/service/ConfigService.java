@@ -72,7 +72,7 @@ public class ConfigService {
      * Periodically reloads the web hook and configuration data if the configured
      * files have been modified.
      */
-    @Scheduled(every = "30s")
+//    @Scheduled(every = "30s")
     void reloadConfigMapData() {
         loadWebHookData();
         loadConfigurationData();
